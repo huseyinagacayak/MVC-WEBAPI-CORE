@@ -19,45 +19,5 @@ Personel Girişi Tamamlandı.
 Gerekli Veritabanları Oluşturuldu.
 
 
-Tablodan veri çekmek için web-api oluşturulacak.
-.net core web app + api (KTUNApi)
-models klasörünün altında yeni bir nesne oluşturuldu.(Tablo adıyla)
 
-prop lar eklendi.
-
-Data Klasörü Oluşturuldu.Context nesnesi oluşturuldu.(using Microsoft.EntityFrameworkCore;)
-Context: DbContext{
- public Context(DbContextOptions<Context> options): base(options)
-        {}
-  public DbSet<ModelDekiNesne> students {get;set;}
-  
-  Servis Eklenecek
-services.AddDbContext<Context>(Options => Options.UseSqlServer(Configuration.GetConnectionString("Baglanti Adi")));
-  
-  Contoller Eklenecek
-  namespace ProjeAdi.Controllers
-{
-    [Route("api/[Controller]")]
-    public class LanguageController : Controller
-    {
-        private Context _context;
-        public  LanguageController(Context context)
-        {
-            _context = context;
-        }
-        [HttpGet]
-
-        public List<LanguageModels> Get()
-        {
-            return _context.languages.ToList();
-        }
-    }
-}
-
-  
-  Add-Migration First 
-  Update-Database
-  
-  
-  
   
