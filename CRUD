@@ -1,0 +1,157 @@
+Katmanlardan oluşan bir proje çalışacağız.
+
+Boş Çalışma Şablonuna
+  1-    Database Tablolarına karşılık gelen c# kodlarından oluşacak katmanı oluşturuyoruz.
+        Bunun için ClassLibrary projesi ekliyoruz.(CafeFinder.Entities)
+        Class1.cs => Cafe.cs (İsim değiştiyoruz. Veri tabanında tutacağımız tablonun ismini veriyoruz.)
+        prop'ları tanımlıyoruz.
+        Tablo özelliklerinide burada veriyoruz.
+        Id Alanı [Key,DatabaseGenerated(DatabaseGeneratedOption.Identity)] (Primary key olduğu ve birer birer artacağını belirttik)
+        String ve integer alanlar tanımlanacak Ör[StringLength(50)]
+
+  2-    Data Access Katmanı ekliyoruz. ClassLibraryi projesi olarak ekliyoruz. CafeFinder.DataAccess
+        Entity framwork işlemlerini burada yapacağız. DbContext nesnesi oluşturuyoruz.( HotelDbContext.cs)
+        public hale çekip DbContext'ten miras aldırıyoruz. DbContext tanımlı olmadığı için Entity FrameWork Sql'i Yüklüyoruz(NuGet).
+        
+        OnConfiguring methodunu override ediyoruz. (override onco)
+        base altına - Connection Stream'e veriyoruz. optionsBuilder.UseSqlServer("Server=(localdb)\\mssqllocaldb; Database=studentWebApi;Trusted_Connection=True;MultipleActiveResultSets=True");
+        Database setini prop ediyoruz.(DbSet<Cafe> Cafes)
+        
+        Migrations işlemleri için Entity Framwork Tools'ü yüklüyoruz. Migration ekliyoruz (add-migration intialcreate(İstenilen isim verilebilir)) Consolu Mevcut katmana çekiyoruz!!!
+        database'i güncelleyip migrationu uyguluyoruz ve database'i oluşturuyoruz.
+   
+   3-   Methodları yazmaya başlıyoruz.
+        Abstract(interface'leri bu kısımda tutacağız) ve Concrete(interfaceleri burada implement edeceğiz)  klasörlerini oluşturuyoruz.
+        
+        Abstract - interface oluşturuyoruz. ICafeRepository.cs (cafe interface deposu)
+          a) public hale getiriyoruz.
+          b)  list<Cafe> GetAllCafes();     //Tüm cafeleri listeliyorum
+              Cafe GetCafeById(Cafe cafe);  //Tek Cafe Çeker
+              Cafe CreateCafe(Cafe cafe);   //Cafe Ekler
+              Cafe UpdateCafe(Cafe cafe);   //Cafe Günceller
+              void DeleteCafe(int id);      //Cafe Siler
+              
+        Concrete implement deposunu oluşturuyorum. class oluşturuyoruz CafeRepository.cs  
+          a) public hale getiriyoruz.
+          b) ICafeRepository'i mirascı olarak tanımlıyoruz. imlement ediyoruz hızlıca.
+          c) Metodları dolduruyoruz.
+            1- GetAllHotels
+                using (var cafeDbContext = new cafeDbContext())
+                {
+                return cafeDbContext.Cafes.ToList();
+                }
+            2- GetCafeById
+                using (var cafeDbContext = new cafeDbContext())
+                {
+                return cafeDbContext.Cafes.Find(id);
+                }
+            3- DeleteCafe
+               using (var cafeDbContext = new cafeDbContext())
+                {
+                var deletedCafe = GetCafeByOd(id);
+                cafeDbContext.Cafes.Remove(deletedCafe);
+                cafeDbContext.SaveChanges();               
+                }
+            4- CreateCafe
+                using (var cafeDbContext = new cafeDbContext())
+                {
+                cafeDbContext.Cafes.Add(cafe);
+                cafeDbContext.SaveChanges();
+                return cafe;
+                }
+            5- UpdateCafe
+               using (var cafeDbContext = new cafeDbContext())
+                {
+                cafeDbContext.Cafes.Update(cafe);
+                cafeDbContext.SaveChanges();
+                return cafe;
+                }
+   4-   Bussiness katmanıyla devam ediyorum.
+        Bunun için ClassLibrary projesi ekliyoruz.(CafeFinder.Business)
+        Class1.cs kafa karıştırmaması için siliyorum.
+        Burada interface tanımlamam gerekiyor. Ve interfaceleri implement etmem gerekiyor.
+        Abstract ve Concrete klasörlerini oluşturuyorum.
+        
+        ICafeService.cs interface oluşturuyorum.
+          a) public hale getiriyoruz.
+          b)  list<Cafe> GetAllCafes();     //Tüm cafeleri listeliyorum
+              Cafe GetCafeById(Cafe cafe);  //Tek Cafe Çeker
+              Cafe CreateCafe(Cafe cafe);   //Cafe Ekler
+              Cafe UpdateCafe(Cafe cafe);   //Cafe Günceller
+              void DeleteCafe(int id);      //Cafe Siler
+        
+        CafeManager.cs class oluşturuyoruz   
+          a) public hale getiriyoruz.
+          b) ICafeService'i mirascı olarak tanımlıyoruz. imlement ediyoruz hızlıca.
+          c) private ICafeRepository _cafeRepository;
+          ctor => _cafeRepository = new  CafeRepository();
+          (interfaceyi kullanarak yazılımı daha esnek hale geriyoruz.)
+          
+          d) Metodları dolduruyoruz.
+            1- GetAllHotels
+            
+                return _cafeRepository.GetAllCafes();
+                
+            2- GetCafeById
+                return _cafeRepository.GetCafeById(id);
+                
+            3- DeleteCafe
+            
+               _cafeRepository.DeleteCafe(id);
+               
+            4- CreateCafe
+               
+                return _cafeRepository.CreateCafe(cafe);
+                
+            5- UpdateCafe
+              
+               return _cafeRepository.UpdateCafe(cafe);
+            
+            Bu classta koşullarımızı yazacağız.
+            Örn; 
+            
+            if (id>0)
+            {
+               return _cafeRepository.GetCafeById(id);
+            }
+            throw new Exception("id can nat be less than 1");
+            
+            
+   5- Uygulama katmanına geldik.Uygulamayı Oluşturuyoruz.
+      services.AddControllers();
+      endpoints.MapControllers();
+      Kontrol Ediyoruz.
+      
+      Controller ekliyoruz. APIController empyy CafesController.cs
+      Araya İnterface Atıyoruz =>
+      private ICafeService _cafeService;
+      ctor
+      _cafeservice=new CafeManager();
+      
+      Servislerimizi Yazıyoruz =>
+      [HttpGet]
+      public List<Cafe> Get()
+      {
+      return _cafeservice.GetAllCafes();
+      }
+      
+      [HttpGet("{id}")]
+      public Cafe Get(int id)
+      {
+      return _cafeservice.GetCafeById(id);
+      }
+      [HttpPost]
+      public Hotel Post([FromBody]Hotel hotel)
+      {
+      return _hotelService.CreateHotel(hotel);
+      }
+      [HttpPut]
+      public Hotel Put([FromBody]Hotel hotel)
+      {
+      return _hotelService.UpdateHotel(hotel);
+      }
+      [HttpDelete("{id}")]
+      public void Delete(int id)
+      {
+      _hotelService.DeleteHotel(id);
+      }
